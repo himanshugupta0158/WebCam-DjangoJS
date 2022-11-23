@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Required library fro WebCam -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.js" integrity="sha512-AQMSn1qO6KN85GOfvH6BWJk46LhlvepblftLHzAv1cdIyTWPBKHX+r+NOXVVw6+XQpeW4LJk/GTmoP48FLvblQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- Bootstrap theme -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    
+    <title>Capture Image WebCam</title>
+
+    <style>
+      /* #my_camera{
+        height: 100%;
+        width: 100%;
+      } */
+      .camera {
+        /* border: 1px solid black; */
+        margin-top: 20px;
+      }
+      .pre_capture_frame{
+        border: 1px solid black;
+      }
+
+      .main1{
+        display: flex;
+      }
+      .imgs{
+        display: flex;
+        flex-direction: row;
+        margin: 30px 0 0 14px;
+        flex-wrap: wrap;
+        width: 900px;
+      }
+       .frame{
+        height: 200px;
+        width: 200px;
+        /* border: 2px solid black; */
+        border-radius: 4px;
+        margin: 2px;
+        
+      }
+      .frame:hover{
+        transform: scale(1.1);
+        transition: 1s all;
+      }
+      .after_capture_frame{
+        height: 250px;
+        width: 250px;
+        border: 2px solid black;
+        border-radius: 4px;
+        margin-top: 8px;
+        margin-right: 100px;
+        margin-left: 150px; 
+      }
+      .download{
+        margin-left: 200px;
+      }
+    </style>
+
+</head>
+<body>
+
+
+      <div class="main1">
+        <div class="camera" id="camera">
+          <label style="margin-left:200px; color:grey;">Live WebCam</label>
+              <div id="my_camera" class="pre_capture_frame" ></div>
+              <input type="hidden" name="captured_image_data" id="captured_image_data">
+              <label style="margin-left:150px; color:grey;">Download after cam image appear</label>
+              <div id="results" >
+                <img class="after_capture_frame" src="{% static '/logo/cam.png' %}" />
+              </div>
+              <button class="download" onclick="SaveCam()">Download Image</button>
+            
+        </div>
+        <div class="imgs">
+          <div class="container" >
+            {% for i in imgs %}
+              {% if i %}
+              <img style="height: 200px; width: 200px;" class="frame" src="{{i}}" />
+              {% else %}
+              <img class="frame" src="{% static '/logo/cam.png' %}" />
+              {% endif %}
+            {% endfor %}
+          </div>
+         
+        </div>
+        </div>
+      </div>
+      <script>
+        // Configure a few settings and attach camera 250x187
+
+        Webcam.set({
+        width: 600,
+        height: 400,
+        image_format: 'jpeg',
+        jpeg_quality: 90
+        });
+        Webcam.attach( '#my_camera' );
+     
+      function saveAs(uri, filename) {
+        var link = document.createElement('a');
+        if (typeof link.download === 'string') {
+          link.href = uri;
+          link.download = filename;
+
+          //Firefox requires the link to be in the body
+          document.body.appendChild(link);
+          
+          //simulate click
+          link.click();
+
+          //remove the link when done
+          document.body.removeChild(link);
+        } else {
+          window.open(uri);
+        }
+      }
+      var imagename;
+
+
+        function take_snapshot() {
+        // take snapshot and get image data
+        Webcam.snap( function(data_uri) {
+        // display results in page
+        document.getElementById('results').innerHTML = 
+        '<img class="after_capture_frame" src="'+data_uri+'"/>';
+        $("#captured_image_data").val(data_uri);
+
+        var currentdate = new Date();
+
+        imagename = "" + currentdate.getDay() + "/" + currentdate.getMonth() 
+                      + "/" + currentdate.getFullYear() + " @ " 
+                      + currentdate.getHours() + ":" 
+                      + currentdate.getMinutes() + ":" + currentdate.getSeconds()+".jpeg";
+            
+        // var file = dataURLtoFile(data_uri,imagename);
+
+        // to save cam image 
+        // window.saveAs(data_uri, imagename);
+        // saveAs(data_uri, imagename);
+        
+        })
+        }
+
+        function SaveCam(){
+          window.saveAs($("#captured_image_data").val(), imagename);
+        }
+
+        // Save WebCam image into data uri per 10 seconds
+       setInterval(() => {
+        take_snapshot();
+        var base64data = $("#captured_image_data").val();
+        $.ajax({
+               type: "POST",
+               dataType: "json",
+               url: "/saveimage",
+               data: {
+                image: base64data,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+              },
+               success: function(data) { 
+                   alert(data);
+               }
+           });
+       }, 10000);
+
+      </script>
+
+    
+</body>
+</html>
