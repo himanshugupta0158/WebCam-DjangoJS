@@ -22,7 +22,7 @@ while True:
     
     isTenSec = current_time - start_time
 
-    if isTenSec >= 10:
+    if isTenSec >= 5:
         start_time = current_time
         print("Time difference : ",isTenSec)
         if count == 0:
