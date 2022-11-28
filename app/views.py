@@ -1,13 +1,14 @@
 import base64
-from django.core.files.base import ContentFile
-from django.core.files import File, images
 
+import cv2 as cv
+import numpy as np
+from django.core.files import File, images
+from django.core.files.base import ContentFile
 from django.shortcuts import render
 from django.views import View
 from PIL import Image
+
 from .models import Cam_Image
-import numpy as np
-import cv2 as cv
 
 # Create your views here.
 
@@ -16,37 +17,42 @@ import cv2 as cv
 #     img = cv.imdecode(nparr, cv.IMREAD_ANYCOLOR)
 #     return cv.imwrite(filename, img)
 
+
 class HomePage(View):
-    template_name = 'index.html'
-    
+    template_name = "index.html"
+
     def get(self, request):
-        return render(request, 'index.html', {"msg" : "Click Save Picture Button to Save Cam Image."})
+        return render(
+            request,
+            "index.html",
+            {"msg": "Click Save Picture Button to Save Cam Image."},
+        )
+
 
 class SaveCamImages(View):
-    template_name = 'index.html'
+    template_name = "index.html"
 
     def post(self, request):
-        user = request.user
-        # remove meta data from base64 encoded data, you can also 
-        # use 'split(',')[1]' to remove all before ','
+        # getting data from post HTTP method.
         img = request.POST["image"]
         # print(img)
 
-        # create a file-like object with your image data 
+        # saving image base64 encoded data into database
         cam = Cam_Image.objects.create(image=img)
         cam.save()
 
         # image_file_like = ContentFile(base64.b64decode(img))
         print("works")
-        return render(request, 'index.html', {"msg" : "Image Saved Successfully"})
+        return render(request, "index.html", {"msg": "Image Saved Successfully"})
+
 
 def getImage(request):
     response = Cam_Image.objects.all().order_by("-id")
-    if len(response) > 12 :
+    if len(response) > 12:
         response = response[0:12]
-    elif len(response) < 1 :
+    elif len(response) < 1:
         response = []
     imgs = []
     for i in response:
         imgs.append(i.image)
-    return render(request, 'index.html', {"imgs" : imgs})
+    return render(request, "index.html", {"imgs": imgs})

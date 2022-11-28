@@ -5,5 +5,3 @@ from django.db import models
 
 class Cam_Image(models.Model):
     image = models.ImageField(upload_to="images/")
-
-    
